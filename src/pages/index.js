@@ -1,69 +1,83 @@
 import React from "react"
-import { Link, graphql } from "gatsby"
+import { graphql } from "gatsby"
 
-import Bio from "../components/bio"
-import Layout from "../components/layout"
-import SEO from "../components/seo"
-import { rhythm } from "../utils/typography"
-
-const BlogIndex = ({ data, location }) => {
-  const siteTitle = data.site.siteMetadata.title
-  const posts = data.allMarkdownRemark.edges
-
+const Index = ({ data }) => {
   return (
-    <Layout location={location} title={siteTitle}>
-      <SEO title="All posts" />
-      <Bio />
-      {posts.map(({ node }) => {
-        const title = node.frontmatter.title || node.fields.slug
-        return (
-          <article key={node.fields.slug}>
-            <header>
-              <h3
-                style={{
-                  marginBottom: rhythm(1 / 4),
-                }}
-              >
-                <Link style={{ boxShadow: `none` }} to={node.fields.slug}>
-                  {title}
-                </Link>
-              </h3>
-              <small>{node.frontmatter.date}</small>
-            </header>
-            <section>
-              <p
-                dangerouslySetInnerHTML={{
-                  __html: node.frontmatter.description || node.excerpt,
-                }}
-              />
-            </section>
-          </article>
-        )
-      })}
-    </Layout>
+    <>
+      <h2>MarkdownRemark with "car" category</h2>
+      <pre>{JSON.stringify(data.postsWithCarCategory, null, 2)}</pre>
+      <div>
+        we have 3 categories - all of them have "category" array as null we only
+        get 1 category as a result of above query containing "elemMatch"
+      </div>
+      <h2>All categories (subset of MarkdownRemark)</h2>
+      <pre>{JSON.stringify(data.categories, null, 2)}</pre>
+      <h2>All posts (subset of MarkdownRemark)</h2>
+      <pre>{JSON.stringify(data.posts, null, 2)}</pre>
+    </>
   )
 }
 
-export default BlogIndex
+export default Index
 
 export const pageQuery = graphql`
-  query {
-    site {
-      siteMetadata {
-        title
+  {
+    postsWithCarCategory: allMarkdownRemark(
+      filter: {
+        frontmatter: {
+          # we can work around the problem by adding more filters
+          # type: { eq: "post" }
+          category: {
+            elemMatch: { frontmatter: { category_id: { eq: "car" } } }
+          }
+        }
+      }
+    ) {
+      nodes {
+        frontmatter {
+          title
+          type
+          category {
+            frontmatter {
+              title
+              category_id
+            }
+          }
+        }
       }
     }
-    allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
-      edges {
-        node {
-          excerpt
-          fields {
-            slug
+
+    # we have 3 categories - all of them have "category" array as null
+    # we only get 1 category as a result of above query containing "elemMatch"
+    categories: allMarkdownRemark(
+      filter: { frontmatter: { type: { eq: "category" } } }
+    ) {
+      nodes {
+        frontmatter {
+          title
+          type
+          category {
+            frontmatter {
+              title
+              type
+            }
           }
-          frontmatter {
-            date(formatString: "MMMM DD, YYYY")
-            title
-            description
+        }
+      }
+    }
+
+    posts: allMarkdownRemark(
+      filter: { frontmatter: { type: { eq: "post" } } }
+    ) {
+      nodes {
+        frontmatter {
+          title
+          type
+          category {
+            frontmatter {
+              title
+              type
+            }
           }
         }
       }
